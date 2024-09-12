@@ -1,0 +1,136 @@
+Samantha interviews many candidates from different colleges using coding challenges and contests. Write a query to print the contest_id, hacker_id, name, and the sums of total_submissions, total_accepted_submissions, total_views, and total_unique_views for each contest sorted by contest_id. Exclude the contest from the result if all four sums are .
+
+Note: A specific contest can be used to screen candidates at more than one college, but each college only holds  screening contest.
+
+Input Format
+
+The following tables hold interview data:
+
+Contests: The contest_id is the id of the contest, hacker_id is the id of the hacker who created the contest, and name is the name of the hacker. 
+
+Colleges: The college_id is the id of the college, and contest_id is the id of the contest that Samantha used to screen the candidates. 
+
+Challenges: The challenge_id is the id of the challenge that belongs to one of the contests whose contest_id Samantha forgot, and college_id is the id of the college where the challenge was given to candidates. 
+
+View_Stats: The challenge_id is the id of the challenge, total_views is the number of times the challenge was viewed by candidates, and total_unique_views is the number of times the challenge was viewed by unique candidates. 
+
+Submission_Stats: The challenge_id is the id of the challenge, total_submissions is the number of submissions for the challenge, and total_accepted_submission is the number of submissions that achieved full scores. 
+
+Sample Input
+
+Contests Table:  Colleges Table:  Challenges Table:  View_Stats Table:  Submission_Stats Table: 
+
+Sample Output
+
+66406 17973 Rose 111 39 156 56
+66556 79153 Angela 0 0 11 10
+94828 80275 Frank 150 38 41 15
+Explanation
+
+The contest  is used in the college . In this college , challenges  and  are asked, so from the view and submission stats:
+
+Sum of total submissions 
+
+Sum of total accepted submissions 
+
+Sum of total views 
+
+Sum of total unique views 
+
+Similarly, we can find the sums for contests  and .
+
+ 
+1
+SELECT
+2
+    con.contest_id,
+3
+    con.hacker_id,
+4
+    con.name,
+5
+    SUM(ss.total_submissions) AS Total_submissions,
+6
+    SUM(ss.total_accepted_submissions) AS Total_accepted_submissions,
+7
+    Sum(vie.total_views) AS Total_views,
+8
+    SUM(vie.total_unique_views) AS Total_unique_views
+9
+FROM
+10
+    Contests AS con
+11
+    INNER JOIN
+12
+        Colleges AS col ON con.contest_id = col.contest_id
+13
+    INNER JOIN
+14
+        Challenges AS cha ON col.college_id = cha.college_id
+15
+    LEFT JOIN
+16
+        (SELECT
+17
+            ch.challenge_id,
+18
+            SUM(total_views) AS total_views,
+19
+            SUM(total_unique_views) AS total_unique_views
+20
+        FROM
+21
+            Challenges AS ch 
+22
+        LEFT JOIN 
+23
+            View_Stats AS vs USING(challenge_id)
+24
+        GROUP BY
+25
+            ch.challenge_id) AS vie ON cha.challenge_id = vie.challenge_id
+26
+    LEFT JOIN
+27
+        (SELECT
+28
+            ch.challenge_id,
+29
+            SUM(sus.total_submissions) AS total_submissions,
+30
+            SUM(sus.total_accepted_submissions) AS total_accepted_submissions
+31
+        FROM
+32
+            Challenges AS ch
+33
+            LEFT JOIN
+34
+            Submission_Stats AS sus USING(challenge_id)
+35
+        GROUP BY
+36
+            ch.challenge_id) AS ss ON cha.challenge_id = ss.challenge_id
+37
+GROUP BY
+38
+    con.contest_id,
+39
+    con.hacker_id,
+40
+    con.name
+41
+HAVING
+42
+    SUM(ss.total_submissions) <> 0 AND
+43
+    SUM(ss.total_accepted_submissions) <> 0 AND
+44
+    Sum(vie.total_views) <> 0 AND
+45
+    SUM(vie.total_unique_views) <> 0
+46
+ORDER BY
+47
+    con.contest_id
